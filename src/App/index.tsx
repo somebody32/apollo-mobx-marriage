@@ -1,45 +1,18 @@
-import { observer } from "mobx-react-lite";
-import { useDeferredValue, useEffect, useState } from "react";
-import store from "./store";
+import { useState } from "react";
+import CountriesList from "../CountriesList";
 
 function App() {
-  const [filter, setFilter] = useState("");
-  const deferredFilter = useDeferredValue(filter);
-
-  useEffect(() => {
-    store.fetchCountries({ nameStarts: deferredFilter });
-  }, [deferredFilter]);
-
-  const { loading, error, countries, totalPages, page } = store;
-
-  const onFilter = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFilter(event.target.value);
-  };
+  const [showCountriesList, setShowCountriesList] = useState(true);
 
   return (
     <div>
-      <h1>Countries</h1>
-      {loading && <div>Loading...</div>}
-      {error && <div>Error: {error}</div>}
-      <div>
-        Page {page} of {totalPages}
-        <button onClick={() => store.getNextPage()}>Next</button>
-      </div>
-      <input
-        type="text"
-        value={filter}
-        placeholder="Filter countries..."
-        onChange={onFilter}
-      />
-      <ul>
-        {countries.map((country) => (
-          <li key={country.code}>
-            {country.emoji} {country.name} ({country.code})
-          </li>
-        ))}
-      </ul>
+      <h1>App</h1>
+      <button onClick={() => setShowCountriesList(!showCountriesList)}>
+        Toggle Countries List
+      </button>
+      {showCountriesList && <CountriesList />}
     </div>
   );
 }
 
-export default observer(App);
+export default App;

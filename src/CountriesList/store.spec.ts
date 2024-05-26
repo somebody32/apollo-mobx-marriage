@@ -1,5 +1,5 @@
 import { expect, it, beforeAll, afterEach, afterAll } from "vitest";
-import { Store } from "./store";
+import store from "./store";
 import { server } from "../../mockServer";
 import { HttpResponse, graphql } from "msw";
 import client from "../apolloClient";
@@ -43,12 +43,12 @@ beforeAll(() => server.listen());
 afterEach(() => {
   server.resetHandlers();
   client.resetStore();
+  store.reset();
 });
 afterAll(() => server.close());
 
 it("fetches countries successfully", async () => {
   server.use(responseHandler);
-  const store = new Store();
 
   await store.fetchCountries();
 
@@ -59,9 +59,19 @@ it("fetches countries successfully", async () => {
   expect(store.error).toBe(null);
 });
 
+it("resets the store", async () => {
+  server.use(responseHandler);
+
+  await store.fetchCountries();
+  store.reset();
+
+  expect(store.countries).toHaveLength(0);
+  expect(store.loading).toBe(false);
+  expect(store.error).toBe(null);
+});
+
 it("handles errors", async () => {
   server.use(errorHandler);
-  const store = new Store();
   expect(store.countries).toHaveLength(0);
 
   await store.fetchCountries();
@@ -73,7 +83,6 @@ it("handles errors", async () => {
 
 it("filters countries successfully", async () => {
   server.use(responseHandler);
-  const store = new Store();
   await store.fetchCountries({ nameStarts: "Uni" });
 
   expect(store.countries).toHaveLength(1);
@@ -84,7 +93,7 @@ it("filters countries successfully", async () => {
 
 it("paginates countries successfully", async () => {
   server.use(responseHandler);
-  const store = new Store({ pageSize: 2 });
+  store.pageSize = 2;
   await store.fetchCountries();
 
   expect(store.countries).toHaveLength(2);

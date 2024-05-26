@@ -25,6 +25,14 @@ class Store {
   pageSize = 10;
   page = 1;
 
+  reset() {
+    this.loading = false;
+    this.error = null;
+    this._countries = [];
+    this.pageSize = 10;
+    this.page = 1;
+  }
+
   constructor({ pageSize }: { pageSize?: number } = {}) {
     if (pageSize) {
       this.pageSize = pageSize;
@@ -75,4 +83,3 @@ class Store {
 const store = new Store();
 
 export default store;
-export { Store };
