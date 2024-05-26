@@ -1,11 +1,16 @@
-import { gql } from "@apollo/client";
 import { makeAutoObservable, runInAction } from "mobx";
 import client from "../apolloClient";
+import { gql } from "../__generated__/gql";
 
+type Country = {
+  code: string;
+  name: string;
+  emoji: string;
+};
 class Store {
   loading = false;
   error: null | string = null;
-  countries = [];
+  countries: Country[] = [];
 
   constructor() {
     makeAutoObservable(this);
@@ -15,7 +20,7 @@ class Store {
     this.loading = true;
     this.error = null;
 
-    const GET_CALENDARS = gql`
+    const GET_COUNTRIES = gql(`
       query GetCountries {
         countries {
           code
@@ -23,11 +28,10 @@ class Store {
           emoji
         }
       }
-    `;
+    `);
 
     try {
-      const response = await client.query({ query: GET_CALENDARS });
-      console.log(response);
+      const response = await client.query({ query: GET_COUNTRIES });
       runInAction(() => {
         this.countries = response.data.countries;
         this.loading = false;
