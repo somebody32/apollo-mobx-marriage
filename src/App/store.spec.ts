@@ -14,12 +14,26 @@ const errorHandler = graphql.query("GetCountries", () => {
   });
 });
 
-const responseHandler = graphql.query("GetCountries", () => {
+const responseHandler = graphql.query("GetCountries", (req) => {
+  if (req.variables.filter === "^Uni") {
+    return HttpResponse.json({
+      data: {
+        countries: [{ code: "US", name: "United States", emoji: "🇺🇸" }],
+      },
+    });
+  }
+
   return HttpResponse.json({
     data: {
       countries: [
         { code: "US", name: "United States", emoji: "🇺🇸" },
         { code: "CA", name: "Canada", emoji: "🇨🇦" },
+        { code: "MX", name: "Mexico", emoji: "🇲🇽" },
+        { code: "BR", name: "Brazil", emoji: "🇧🇷" },
+        { code: "AR", name: "Argentina", emoji: "🇦🇷" },
+        { code: "CL", name: "Chile", emoji: "🇨🇱" },
+        { code: "CO", name: "Colombia", emoji: "🇨🇴" },
+        { code: "PE", name: "Peru", emoji: "🇵🇪" },
       ],
     },
   });
@@ -38,7 +52,7 @@ it("fetches countries successfully", async () => {
 
   await store.fetchCountries();
 
-  expect(store.countries).toHaveLength(2);
+  expect(store.countries).toHaveLength(8);
   expect(store.countries[0].name).toBe("United States");
   expect(store.countries[1].name).toBe("Canada");
   expect(store.loading).toBe(false);
@@ -55,4 +69,37 @@ it("handles errors", async () => {
   expect(store.countries).toHaveLength(0);
   expect(store.loading).toBe(false);
   expect(store.error).toBe("Something went wrong");
+});
+
+it("filters countries successfully", async () => {
+  server.use(responseHandler);
+  const store = new Store();
+  await store.fetchCountries({ nameStarts: "Uni" });
+
+  expect(store.countries).toHaveLength(1);
+  expect(store.countries[0].name).toBe("United States");
+  expect(store.loading).toBe(false);
+  expect(store.error).toBe(null);
+});
+
+it("paginates countries successfully", async () => {
+  server.use(responseHandler);
+  const store = new Store({ pageSize: 2 });
+  await store.fetchCountries();
+
+  expect(store.countries).toHaveLength(2);
+  expect(store.totalPages).toBe(4);
+  expect(store.countries[0].name).toBe("United States");
+  expect(store.countries[1].name).toBe("Canada");
+
+  store.getNextPage();
+
+  expect(store.countries).toHaveLength(4);
+  expect(store.countries[0].name).toBe("United States");
+  expect(store.countries[1].name).toBe("Canada");
+  expect(store.countries[2].name).toBe("Mexico");
+  expect(store.countries[3].name).toBe("Brazil");
+
+  expect(store.loading).toBe(false);
+  expect(store.error).toBe(null);
 });

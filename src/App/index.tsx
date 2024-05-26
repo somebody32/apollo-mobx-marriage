@@ -1,25 +1,36 @@
 import { observer } from "mobx-react-lite";
-import { useEffect } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import store from "./store";
 
 function App() {
+  const [filter, setFilter] = useState("");
+  const deferredFilter = useDeferredValue(filter);
+
   useEffect(() => {
-    store.fetchCountries();
-  }, []);
+    store.fetchCountries({ nameStarts: deferredFilter });
+  }, [deferredFilter]);
 
-  const { loading, error, countries } = store;
+  const { loading, error, countries, totalPages, page } = store;
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+  const onFilter = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFilter(event.target.value);
+  };
 
   return (
     <div>
       <h1>Countries</h1>
+      {loading && <div>Loading...</div>}
+      {error && <div>Error: {error}</div>}
+      <div>
+        Page {page} of {totalPages}
+        <button onClick={() => store.getNextPage()}>Next</button>
+      </div>
+      <input
+        type="text"
+        value={filter}
+        placeholder="Filter countries..."
+        onChange={onFilter}
+      />
       <ul>
         {countries.map((country) => (
           <li key={country.code}>
