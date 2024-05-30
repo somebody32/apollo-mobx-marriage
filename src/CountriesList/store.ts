@@ -25,14 +25,7 @@ class Store {
   pageSize = 10;
   page = 1;
 
-  reset() {
-    this.loading = false;
-    this.error = null;
-    this._countries = [];
-    this.pageSize = 10;
-    this.page = 1;
-  }
-
+  // DI/configuration for testing
   constructor({ pageSize }: { pageSize?: number } = {}) {
     if (pageSize) {
       this.pageSize = pageSize;
@@ -46,20 +39,17 @@ class Store {
     this.error = null;
 
     try {
-      const variables = { filter: nameStarts ? `^${nameStarts}` : "" };
-      const response = await client.query({ query: GET_COUNTRIES, variables });
+      const response = await requestCountries({ nameStarts });
       runInAction(() => {
         this._countries = response.data.countries;
-        this.loading = false;
         this.page = 1;
       });
     } catch (error) {
       runInAction(() => {
-        if (error instanceof Error) {
-          this.error = error.message;
-        } else {
-          this.error = String(error);
-        }
+        this.error = errorMessage(error);
+      });
+    } finally {
+      runInAction(() => {
         this.loading = false;
       });
     }
@@ -78,8 +68,31 @@ class Store {
   getNextPage() {
     this.page++;
   }
+
+  reset() {
+    this.loading = false;
+    this.error = null;
+    this._countries = [];
+    this.pageSize = 10;
+    this.page = 1;
+  }
+}
+
+// Utils
+function requestCountries({ nameStarts }: { nameStarts?: string } = {}) {
+  return client.query({
+    query: GET_COUNTRIES,
+    variables: { filter: nameStarts ? `^${nameStarts}` : "" },
+  });
+}
+
+function errorMessage(error: Error | unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  } else {
+    return String(error);
+  }
 }
 
 const store = new Store();
-
 export default store;
